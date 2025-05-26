@@ -26,6 +26,12 @@ import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DatabindException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.json.JSONObject;
 import org.json.JSONException;
 import org.json.JSONArray;
@@ -38,7 +44,15 @@ import java.util.Iterator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.io.FileNotFoundException;
 
 public abstract class AnonymousProfileTransform<R extends ConnectRecord<R>> implements Transformation<R> {
 
@@ -166,12 +180,159 @@ public abstract class AnonymousProfileTransform<R extends ConnectRecord<R>> impl
         }
     }
 
-    private R applySchemaless(R record) {
+
+    private R applySchemaless(R record)  {
         final Map<String, Object> value = Requirements.requireMap(operatingValue(record), PURPOSE);
-        // final Map<String, Object> key = Requirements.requireMap(record.key(), PURPOSE);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        File file = new File("/app/config/serviceType.json");
+        File filedistrict = new File("/app/config/district.json");
+        File fileTribe = new File("/app/config/Tribe.json");
+        File fileServices = new File("/app/config/services.json");
+        File fileGender = new File("/app/config/Gender.json");
+        
+        Map<String, Object> jsonMap = new HashMap<>();
+        try {
+            jsonMap = objectMapper.readValue(file, new TypeReference<Map<String, Object>>() {});
+        } catch (StreamReadException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (DatabindException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        if (jsonMap == null || !jsonMap.containsKey("fieldVal") || jsonMap.get("fieldVal") == null) {     
+            throw new IllegalStateException("'fieldVal' is missing or null in the JSON file!"); }
+            
+        List<Map<String, String>> fieldValList = (List<Map<String, String>>) jsonMap.get("fieldVal");
+
+        if (fieldValList == null || fieldValList.isEmpty()) {    
+            throw new IllegalStateException("fieldValList is empty or null!"); }
+
+        Map<String, String> fieldValueMap = fieldValList.stream()
+        .filter(entry -> entry.get("code") != null && entry.get("value") != null) // Avoid NPE
+        .collect(Collectors.toMap(entry -> entry.get("code"), entry -> entry.get("value")));
+    
+
+
+
+        Map<String, Object> jsonMapDist = new HashMap<>();
+        try {
+            jsonMapDist = objectMapper.readValue(filedistrict, new TypeReference<Map<String, Object>>() {});
+        } catch (StreamReadException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (DatabindException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        
+        if (jsonMapDist == null || !jsonMapDist.containsKey("district") || jsonMapDist.get("district") == null) {     
+            throw new IllegalStateException("'district' is missing or null in the JSON file!"); }
+          
+        List<Map<String, String>> districtList = (List<Map<String, String>>) jsonMapDist.get("district");
+
+        if (districtList == null || districtList.isEmpty()) {    
+            throw new IllegalStateException("districtList is empty or null!"); }
+
+        Map<String, String> districtMap = districtList.stream()
+        .filter(entry -> entry.get("code") != null && entry.get("value") != null) // Avoid NPE
+        .collect(Collectors.toMap(entry -> entry.get("code"), entry -> entry.get("value")));
+
+
+        Map<String, Object> jsonMapTribe = new HashMap<>();
+        try {
+            jsonMapTribe = objectMapper.readValue(fileTribe, new TypeReference<Map<String, Object>>() {});
+        } catch (StreamReadException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (DatabindException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        
+        if (jsonMapTribe == null || !jsonMapTribe.containsKey("Tribe") || jsonMapTribe.get("Tribe") == null) {     
+            throw new IllegalStateException("'Tribe' is missing or null in the JSON file!"); }
+          
+        List<Map<String, String>> TribeList = (List<Map<String, String>>) jsonMapTribe.get("Tribe");
+
+        if (TribeList == null || TribeList.isEmpty()) {    
+            throw new IllegalStateException("TribeList is empty or null!"); }
+
+        Map<String, String> TribeMap = TribeList.stream()
+        .filter(entry -> entry.get("code") != null && entry.get("value") != null) // Avoid NPE
+        .collect(Collectors.toMap(entry -> entry.get("code"), entry -> entry.get("value")));
+
+        Map<String, Object> jsonMapServices = new HashMap<>();
+        try {
+            jsonMapServices = objectMapper.readValue(fileServices, new TypeReference<Map<String, Object>>() {});
+        } catch (StreamReadException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (DatabindException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        
+        if (jsonMapServices == null || !jsonMapServices.containsKey("services") || jsonMapServices.get("services") == null) {     
+            throw new IllegalStateException("'services' is missing or null in the JSON file!"); }
+          
+        List<Map<String, String>> ServicesList = (List<Map<String, String>>) jsonMapServices.get("services");
+
+        if (ServicesList == null || ServicesList.isEmpty()) {    
+            throw new IllegalStateException("ServicesList is empty or null!"); }
+
+        Map<String, String> ServicesMap = ServicesList.stream()
+        .filter(entry -> entry.get("code") != null && entry.get("value") != null) // Avoid NPE
+        .collect(Collectors.toMap(entry -> entry.get("code"), entry -> entry.get("value")));
+
+        Map<String, Object> jsonMapGender = new HashMap<>();
+        try {
+            jsonMapGender = objectMapper.readValue(fileGender, new TypeReference<Map<String, Object>>() {});
+        } catch (StreamReadException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (DatabindException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        
+        if (jsonMapGender == null || !jsonMapGender.containsKey("Gender") || jsonMapGender.get("Gender") == null) {     
+            throw new IllegalStateException("'Gender' is missing or null in the JSON file!"); }
+          
+        List<Map<String, String>> GenderList = (List<Map<String, String>>) jsonMapGender.get("Gender");
+
+        if (GenderList == null || GenderList.isEmpty()) {    
+            throw new IllegalStateException("GenderList is empty or null!"); }
+
+        Map<String, String> GenderMap = GenderList.stream()
+        .filter(entry -> entry.get("code") != null && entry.get("value") != null) // Avoid NPE
+        .collect(Collectors.toMap(entry -> entry.get("code"), entry -> entry.get("value")));
+ 
+
 
         Map<String, Object> updatedValueRoot = new HashMap<>(value);
-        // Map<String, Object> updatedKeyRoot = new HashMap<>(key);
+       
         String date = (String)Requirements.getNestedField(updatedValueRoot,"profile.date");
         for(int i=0; i<profileFieldsList.length ; i++){
             Map<String, Object> updatedValue = updatedValueRoot;
@@ -179,6 +340,30 @@ public abstract class AnonymousProfileTransform<R extends ConnectRecord<R>> impl
             try{
                 for(int j=0; j<profHierar.length ; j++){
                     updatedValue = (Map<String, Object>)updatedValue.get(profHierar[j]);
+                    
+                     if (updatedValue != null) {
+                     String serviceType = (String) updatedValue.get("serviceType");
+                     if (serviceType != null && fieldValueMap.containsKey(serviceType)) {
+                     updatedValue.put("serviceType", fieldValueMap.get(serviceType));
+                     }
+                     String dist_name = (String) updatedValue.get("district");
+                     if (dist_name != null && districtMap.containsKey(dist_name)) {
+                     updatedValue.put("district", districtMap.get(dist_name));
+                     }
+                     String Tribe_name = (String) updatedValue.get("tribe");
+                     if (Tribe_name != null && TribeMap.containsKey(Tribe_name)) {
+                     updatedValue.put("tribe", TribeMap.get(Tribe_name));
+                     }
+                     String Services_name = (String) updatedValue.get("service");
+                     if (Services_name != null && ServicesMap.containsKey(Services_name)) {
+                     updatedValue.put("service", ServicesMap.get(Services_name));
+                     }
+                     String Gender_name = (String) updatedValue.get("gender");
+                     if (Gender_name != null && GenderMap.containsKey(Gender_name)) {
+                     updatedValue.put("gender", GenderMap.get(Gender_name));
+                     }
+                }
+                
                 }
             }
             catch(Exception e){
@@ -186,6 +371,7 @@ public abstract class AnonymousProfileTransform<R extends ConnectRecord<R>> impl
             }
             
             if(updatedValue != null){
+                
                 for(String func : functionsListProfile){
         
                     switch (func) {
@@ -224,72 +410,155 @@ public abstract class AnonymousProfileTransform<R extends ConnectRecord<R>> impl
     //     return updatedKey.get('payload')
     // } 
 
-    static void processBiometricList(Map<String, Object> updatedValue){
-        if( updatedValue.get("biometricInfo") == null ){
-            return;
-        }
-
-        List<Object> arr = (List<Object>)updatedValue.get("biometricInfo");
-
-        Map<String, Object> ret = new HashMap<>();
-
-        for(int i=0; i<arr.size();){
-            // todo: check type before casting
-            Map<String, Object> m = new HashMap<>((Map<String, Object>)arr.get(i));
-            m.remove("subType");
-            String mtype = (String)m.get("type");
-            float qualScoreSum=0,attemptsSum=0;
-            int count=0;
-            int j;
-            for(j=i;j<arr.size();j++){
-                Map<String, Object> each = (Map<String, Object>)arr.get(j);
-                if(((String)each.get("type")).equals(mtype)) {
-                    try{
-                        int q =(int)each.get("qualityScore");
-                        int a =Integer.parseInt((String)each.get("attempts"));
-                        count++;
-
-                        qualScoreSum += q;
-                        attemptsSum += a;
+    static void processBiometricList(Map<String, Object> updatedValue) {
+        try {
+            // If biometricInfo is null, just return without modification
+            if (updatedValue == null || updatedValue.get("biometricInfo") == null) {
+                return;
+            }
+    
+            Object biometricObj = updatedValue.get("biometricInfo");
+            if (!(biometricObj instanceof List)) {
+                System.out.println("Warning: biometricInfo is not a List, skipping processing");
+                return;
+            }
+    
+            List<Object> arr = (List<Object>)biometricObj;
+            Map<String, Object> ret = new HashMap<>();
+            int nullCount = 0;
+            List<Map<String, Object>> processedList = new ArrayList<>(); // New list to store processed items
+    
+            for (int i = 0; i < arr.size();i++) {
+                try {
+                    Object item = arr.get(i);
+                    if (item == null) {
+                        System.out.println("Processing null biometric item.");
+                        nullCount++; 
+                        Map<String, Object> placeholder = new HashMap<>();
+                        placeholder.put("type", "unknown");
+                        placeholder.put("message", "Null record");
+                        processedList.add(placeholder);
+                        continue;
                     }
-                    catch(Exception e){
-                        System.out.println(">>>>>>> " + e);
+                    
+                    if (!(item instanceof Map)) {
+                        System.out.println("Warning: biometric item is not a Map, skipping");
+                        continue;
                     }
-                    arr.remove(j--);
-                }
-                else{
+    
+                    Map<String, Object> m = new HashMap<>((Map<String, Object>)item);
+                    if (m.get("type") == null) {
+                        System.out.println("Warning: biometric item has no type, skipping");
+                        continue;
+                    }
+    
+                    String mtype = (String)m.get("type");
+                    m.remove("subType");
+                    
+                    float qualScoreSum = 0, attemptsSum = 0;
+                    int count = 0;
+                    int j;
+                    
+                    for (j = i+1; j < arr.size(); j++) {
+                        try {
+                            Object eachObj = arr.get(j);
+                            if (!(eachObj instanceof Map)) {
+                                continue;
+                            }
+    
+                            Map<String, Object> each = (Map<String, Object>)eachObj;
+                            if (each.get("type") == null || !((String)each.get("type")).equals(mtype)) {
+                                continue;
+                            }
+    
+                            // Safely get qualityScore and attempts
+                            Object qualityScoreObj = each.get("qualityScore");
+                            Object attemptsObj = each.get("attempts");
+                            
+                            if (qualityScoreObj != null && attemptsObj != null) {
+                                int qualityScore;
+                                int attempts;
+                                
+                                // Handle different types of qualityScore
+                                if (qualityScoreObj instanceof Integer) {
+                                    qualityScore = (Integer)qualityScoreObj;
+                                } else if (qualityScoreObj instanceof String) {
+                                    qualityScore = Integer.parseInt((String)qualityScoreObj);
+                                } else {
+                                    continue;
+                                }
+                                
+                                // Handle different types of attempts
+                                if (attemptsObj instanceof Integer) {
+                                    attempts = (Integer)attemptsObj;
+                                } else if (attemptsObj instanceof String) {
+                                    attempts = Integer.parseInt((String)attemptsObj);
+                                } else {
+                                    continue;
+                                }
+                                
+                                count++;
+                                qualScoreSum += qualityScore;
+                                attemptsSum += attempts;
+                            }
+                            
+                            
+                        } catch (Exception e) {
+                            System.out.println("Warning: Error processing biometric item: " + e.getMessage());
+                        }
+                    }
+    
+                    // Process digitalId if present
+                    if (m.get("digitalId") != null) {
+                        try {
+                            Object digitalIdObj = m.get("digitalId");
+                            if (digitalIdObj instanceof String) {
+                                String digitalIdStr = ((String) digitalIdObj).trim();
+                     
+                                // Check if digitalIdStr is JSON object or array
+                                if (digitalIdStr.startsWith("[")) {
+                                    // Handle JSON array
+                                    m.put("digitalId", StringToJson.returnSchemalessObject(new JSONArray(digitalIdStr)));
+                                } else if (digitalIdStr.startsWith("{")) {
+                                    // Handle JSON object
+                                    m.put("digitalId", StringToJson.returnSchemalessObject(new JSONObject(digitalIdStr)));
+                                } 
+                                else {
+                                    // For invalid JSON format, store the raw string as an error message
+                                    m.put("digitalId", "Invalid JSON format: " + digitalIdStr);
+                                }
+                     
+                                // If digitalId is a map, remove the "dateTime" field
+                                if (m.get("digitalId") instanceof Map) {
+                                    ((Map<String, Object>) m.get("digitalId")).remove("dateTime");
+                                }
+                            }
+                        } catch (Exception e) {
+                            // Catch errors and store the error message in the digitalId field
+                            m.put("digitalId", "Error processing digitalId: " + e.getMessage());
+                        }
+                    }
+                     
+    
+                    m.put("attempts", count == 0 ? 0 : attemptsSum/count);
+                    m.put("qualityScore", count == 0 ? 0 : qualScoreSum/count);
+                    ret.put(mtype, m);
+                    processedList.add(m);
+                    
+                    
+                } catch (Exception e) {
+                    System.out.println("Warning: Error processing biometric record: " + e.getMessage());
+                    
                 }
             }
-
-            if(m.get("digitalId")!=null){
-                // System.out.println("=========> DIGITALID PROBLEM " + m.get("digitalId"));
-                try{
-                    m.put("digitalId", StringToJson.returnSchemalessObject(new JSONObject((String)m.get("digitalId"))));
-                    ((Map<String, Object>)m.get("digitalId")).remove("dateTime");
-                }
-                catch(JSONException je){
-                    try{
-                        String str = (String)m.get("digitalId");
-                        str = new String(new Base64(true).decode(str));
-                        m.put("digitalId", StringToJson.returnSchemalessObject(new JSONObject(str)));
-                        ((Map<String, Object>)m.get("digitalId")).remove("dateTime");
-                    }
-                    catch(Exception e){
-                      e.printStackTrace();
-                    }
-                }
-            }
-
-
-            m.put("attempts",count == 0 ? 0 : attemptsSum/count);
-            m.put("qualityScore", count == 0 ? 0 : qualScoreSum/count);
-
-            ret.put(mtype,m);
-
-            i=0;
+    
+            updatedValue.put("biometricInfo", processedList);
+            updatedValue.put("nullRecords", nullCount); // Track null values separately
+            
+        } catch (Exception e) {
+            System.out.println("Error in processBiometricList: " + e.getMessage());
+            // Don't throw exception, just return without modification
         }
-
-        updatedValue.put("biometricInfo",ret);
     }
 
     static void processLocationList(Map<String, Object> updatedValue){
@@ -323,31 +592,65 @@ public abstract class AnonymousProfileTransform<R extends ConnectRecord<R>> impl
         updatedValue.put("registrationOfficers",ret);
     }
 
-    static void processAgeGroup(Map<String, Object> updatedValue, String[] agList, String agOut, String date){
-        if(date == null || updatedValue.get("yearOfBirth") == null){
-            return;
-        }
-        Object yob = updatedValue.get("yearOfBirth");
-        int yearOfBirth;
-        if(yob instanceof Integer){
-            yearOfBirth = (int)yob;
-        } else if(yob instanceof String){
-            yearOfBirth = Integer.parseInt((String)yob);
-        } else{
-            return;
-        }
-
-        int age = Integer.parseInt(date.split("-")[0])-yearOfBirth;
-        int i;
-        for(i=0;i<agList.length-1;i++){
-            String[] ag = agList[i].trim().split("-");
-            if(age>=Integer.parseInt(ag[0]) && age<Integer.parseInt(ag[1])){
-                break;
-            }
-        }
-        updatedValue.put(agOut,agList[i].trim());
-    }
     
+    static void processAgeGroup(Map<String, Object> updatedValue, String[] agList, String agOut, String date) {
+        // Check if date is null or empty
+        if (date == null || date.isEmpty()) {
+            return;
+        }
+        
+        // Check if yearOfBirth exists
+        Object yob = updatedValue.get("yearOfBirth");
+        if (yob == null) {
+            return;
+        }
+        
+        int yearOfBirth;
+        if (yob instanceof Integer) {
+            yearOfBirth = (int) yob;
+        } else if (yob instanceof String) {
+            String yobString = (String) yob;
+            // Handle empty strings
+            if (yobString.isEmpty()) {
+                return;
+            }
+            try {
+                yearOfBirth = Integer.parseInt(yobString);
+            } catch (NumberFormatException e) {
+                // Handle invalid number format
+                return;
+            }
+        } else {
+            return;
+        }
+        
+        try {
+            // Safely parse date components
+            String[] dateParts = date.split("-");
+            if (dateParts.length < 1) {
+                return;
+            }
+            
+            int currentYear = Integer.parseInt(dateParts[0]);
+            int age = currentYear - yearOfBirth;
+            
+            int i;
+            for (i = 0; i < agList.length - 1; i++) {
+                String[] ag = agList[i].trim().split("-");
+                if (ag.length < 2) {
+                    continue; // Skip malformed age group
+                }
+                if (age >= Integer.parseInt(ag[0]) && age < Integer.parseInt(ag[1])) {
+                    break;
+                }
+            }
+            updatedValue.put(agOut, agList[i].trim());
+        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+            // Safely handle any parsing exceptions
+            return;
+        }
+    }
+
     static void processChannel(Map<String, Object> updatedValue, String[] agList){
 
         // agList expected in the form Both phone email, only phone, only email, None
@@ -497,23 +800,46 @@ public abstract class AnonymousProfileTransform<R extends ConnectRecord<R>> impl
     //     return returnValue;
     // }
 
-    static void esPutMapping(String esUrl, String topicName){
-        String sRequest= "{\"mappings\": {\"properties\": {\"registrationCenterGeoLocation\": {\"type\": \"geo_point\"}, \"profile\": {\"properties\": {\"updateId\": {\"type\": \"keyword\"}}}}}}";
 
-        CloseableHttpClient hClient= HttpClients.createDefault();
-        HttpPut hPut = new HttpPut(esUrl+"/"+topicName+"/");
+    static void esPutMapping(String esUrl, String topicName) {
+        String sRequest = "{"
+                + "\"properties\": {"
+                + "\"registrationCenterGeoLocation\": {\"type\": \"geo_point\"},"
+                + "\"profile\": {"
+                + "   \"properties\": {"
+                + "       \"updateId\": {\"type\": \"keyword\"},"
+                + "       \"schema\": {"
+                + "           \"properties\": {"
+                + "               \"fields\": {"
+                + "                   \"properties\": {"
+                + "                       \"fields\": {"
+                + "                           \"properties\": {"
+                + "                               \"default\": {\"type\": \"text\"}"
+                + "                           }"
+                + "                       }"
+                + "                   }"
+                + "               }"
+                + "           }"
+                + "       }"
+                + "   }"
+                + "}"
+                + "}"
+                + "}";
+     
+        CloseableHttpClient hClient = HttpClients.createDefault();
+        HttpPut hPut = new HttpPut(esUrl + "/" + topicName + "/_mapping");
         hPut.setHeader("Content-type", "application/json");
-        hPut.setEntity(new StringEntity(sRequest));
-        try(CloseableHttpResponse hResponse = hClient.execute(hPut)){
+        hPut.setEntity(new StringEntity(sRequest, StandardCharsets.UTF_8));
+        try (CloseableHttpResponse hResponse = hClient.execute(hPut)) {
             HttpEntity entity = hResponse.getEntity();
             String jsonString = EntityUtils.toString(entity);
-            if(hResponse.getCode()!=200){
-                System.out.println(">>>>>>>Unsuccessful while putting mapping : " + jsonString);
+            if (hResponse.getCode() != 200) {
+                System.out.println(">>>>>>> Unsuccessful while putting mapping : " + jsonString);
+            } else {
+                System.out.println(">>>>>>> Mapping update successful: " + jsonString);
             }
-        }
-        catch(Exception e){
-            System.out.println(">>>>>>>In Exception: Unsuccessful while putting mapping : "+e);
+        } catch (Exception e) {
+            System.out.println(">>>>>>> In Exception: Unsuccessful while putting mapping : " + e);
         }
     }
-
 }

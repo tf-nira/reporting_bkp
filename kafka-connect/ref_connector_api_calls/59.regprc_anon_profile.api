@@ -34,9 +34,22 @@ curl \
           "key.converter.schemas.enable": "false",
           "value.converter.schemas.enable": "false",
 
-          "behavior.on.null.values": "DELETE",
+          "behavior.on.null.values": "IGNORE",
 
-          "transforms": "ext1,ext2,tsconvert01,tsconvert02,tsconvert03,stringtojson01,latitudeJoin,longitudeJoin,join01,anonTransform,tsSelect",
+          "errors.tolerance": "all",
+          "errors.log.enable": "true",
+          "drop.tombstones": "false",
+          "errors.log.include.messages": "true",
+          "behavior.on.version.conflict": "ignore",
+          "errors.deadletterqueue.topic.name": '\"dlq-$ES_INDICES\"',
+          "admin.client.id": '\"connector-dlq-adminclient-$ES_INDICES\"',
+          "producer.metrics.recording.level": "INFO",
+          "errors.deadletterqueue.context.headers.enable": "true",
+          "behavior.on.malformed.documents": "IGNORE",
+          "use.event.time.ordering": "true",
+
+
+          "transforms": "ext1,ext2,tsconvert01,tsconvert02,tsconvert03,stringtojson01,latitudeJoin,longitudeJoin,join01,centerNameJoin,anonTransform,tsSelect",
 
           "transforms.ext1.type": "org.apache.kafka.connect.transforms.ExtractField$Value",
           "transforms.ext1.field": "payload",
@@ -85,6 +98,15 @@ curl \
           "transforms.join01.es.output.field": "name",
           "transforms.join01.output.field": "documents_names",
 
+          "transforms.centerNameJoin.type": "io.mosip.kafka.connect.transforms.DynamicNewField$Value",
+          "transforms.centerNameJoin.es.index": '\"$DB_PREFIX_INDEX.master.registration_center\"',
+          "transforms.centerNameJoin.es.url": '\"$ES_URL\"',
+          "transforms.centerNameJoin.input.fields": "profile.enrollmentCenterId",
+          "transforms.centerNameJoin.input.default.values": "profile.enrollmentCenterId",
+          "transforms.centerNameJoin.es.input.fields": "id",
+          "transforms.centerNameJoin.es.output.field": "name",
+          "transforms.centerNameJoin.output.field": "registrationCenterName",
+
           "transforms.anonTransform.type": "io.mosip.kafka.connect.transforms.AnonymousProfileTransform$Value",
           "transforms.anonTransform.profiles.fields.list": "profile",
           "transforms.anonTransform.age.groups.list": "0-5, 5-18, 18-60, 60 and above",
@@ -92,11 +114,11 @@ curl \
           "transforms.anonTransform.channel.groups.list": "Both phone and email,only phone,only email,None",
           "transforms.anonTransform.es.url": '\"$ES_URL\"',
           "transforms.anonTransform.kafka.topic.name": '\"$ES_INDICES\"',
-          "transforms.anonTransform.profile.listOfFunctions": "processBiometricList,processAgeGroup,processChannel,processProcessName,processAssister,processLocationList",
+          "transforms.anonTransform.profile.listOfFunctions": "processBiometricList,processAgeGroup,processChannel,processProcessName,processAssister,processLocationList,processDistrict,processEnrolmentOffice,processServiceType,processUpdateProfile",
           "transforms.anonTransform.listOfFunctions": "processRegistrationCenter",
 
           "transforms.tsSelect.type": "io.mosip.kafka.connect.transforms.TimestampSelector$Value",
-          "transforms.tsSelect.ts.order": "upd_dtimes,cr_dtimes",
+          "transforms.tsSelect.ts.order": "cr_dtimes,upd_dtimes",
           "transforms.tsSelect.output.field": "@timestamp_gen"
       }
 }';

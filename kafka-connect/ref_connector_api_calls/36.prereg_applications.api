@@ -6,12 +6,12 @@
 #DB_PREFIX_INDEX=
 #ES_URL=
 
-CONN_NAME="regprc_registration_$DB_PREFIX_INDEX"; # change this.. give unique name for each db/table
+CONN_NAME="prereg_applications_$DB_PREFIX_INDEX"; # change this.. give unique name for each db/table
 
 ES_CONN_URL='es-connect:8083'; # needn't change .. this is the ES-connector service name
 
-DB_NAME='mosip_regprc'; # change this
-DB_TABLES='regprc.registration'
+DB_NAME='mosip_prereg'; # change this
+DB_TABLES='prereg.applications'
 ES_INDICES=$(echo $DB_TABLES | sed -E "s/([^,]+)/$DB_PREFIX_INDEX.\1/g")
 
 curl \
@@ -34,22 +34,18 @@ curl \
           "key.converter.schemas.enable": "false",
           "value.converter.schemas.enable": "true",
 
-          "behavior.on.null.values": "IGNORE",
+          "behavior.on.null.values": "DELETE",
 
           "errors.tolerance": "all",
           "errors.log.enable": "true",
-          "drop.tombstones": "false",
           "errors.log.include.messages": "true",
           "behavior.on.version.conflict": "ignore",
-          "errors.deadletterqueue.topic.name": '\"dlq-$ES_INDICES\"',
-          "admin.client.id": '\"connector-dlq-adminclient-$ES_INDICES\"',
           "producer.metrics.recording.level": "INFO",
-          "errors.deadletterqueue.context.headers.enable": "true",
-          "behavior.on.malformed.documents": "IGNORE",
           "use.event.time.ordering": "true",
+          "behavior.on.malformed.documents": "WARN",
+          
 
-
-          "transforms": "debezExtract,tsconvert01,tsconvert02,tsconvert03,tsconvert04,tsconvert05,tsconvert06,tsconvert07,tsSelect",
+          "transforms": "debezExtract,tsconvert01,tsconvert02,tsconvert03,tsSelect",
 
           "transforms.debezExtract.type": "io.debezium.transforms.ExtractNewRecordState",
           "transforms.debezExtract.delete.handling.mode": "drop",
@@ -61,31 +57,16 @@ curl \
           "transforms.tsconvert01.field": "source_ts_ms",
 
           "transforms.tsconvert02.type": "io.mosip.kafka.connect.transforms.TimestampConverterAdv$Value",
-          "transforms.tsconvert02.field": "latest_trn_dtimes",
+          "transforms.tsconvert02.field": "cr_dtimes",
           "transforms.tsconvert02.input.type": "micro_sec",
 
           "transforms.tsconvert03.type": "io.mosip.kafka.connect.transforms.TimestampConverterAdv$Value",
-          "transforms.tsconvert03.field": "pkt_cr_dtimes",
+          "transforms.tsconvert03.field": "upd_dtimes",
           "transforms.tsconvert03.input.type": "micro_sec",
 
-          "transforms.tsconvert04.type": "io.mosip.kafka.connect.transforms.TimestampConverterAdv$Value",
-          "transforms.tsconvert04.field": "cr_dtimes",
-          "transforms.tsconvert04.input.type": "micro_sec",
-
-          "transforms.tsconvert05.type": "io.mosip.kafka.connect.transforms.TimestampConverterAdv$Value",
-          "transforms.tsconvert05.field": "upd_dtimes",
-          "transforms.tsconvert05.input.type": "micro_sec",
-
-          "transforms.tsconvert06.type": "io.mosip.kafka.connect.transforms.TimestampConverterAdv$Value",
-          "transforms.tsconvert06.field": "del_dtimes",
-          "transforms.tsconvert06.input.type": "micro_sec",
-
-          "transforms.tsconvert07.type": "io.mosip.kafka.connect.transforms.TimestampConverterAdv$Value",
-          "transforms.tsconvert07.field": "resume_timestamp",
-          "transforms.tsconvert07.input.type": "micro_sec",
-
           "transforms.tsSelect.type": "io.mosip.kafka.connect.transforms.TimestampSelector$Value",
-          "transforms.tsSelect.ts.order": "cr_dtimes,upd_dtimes",
-          "transforms.tsSelect.output.field": "@timestamp_gen"
+          "transforms.tsSelect.ts.order": "cr_dtimes,upd_dtimes,source_ts_ms",
+          "transforms.tsSelect.output.field": "@timestamp_gen",
+          "transforms.tsSelect.default": "now"
       }
 }';
